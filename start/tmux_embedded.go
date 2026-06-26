@@ -50,12 +50,12 @@ func (t *tmuxEmbeddedClient) Start() error {
 func (t *tmuxEmbeddedClient) createPane(p *process) (string, error) {
 	args := []string{
 		"split-window", "-d",
+		"-c", t.root,
 		"-P", "-F", "#{pane_id}",
 		p.Command,
 	}
 
 	cmd := exec.Command("tmux", args...)
-	cmd.Dir = t.root
 
 	var out bytes.Buffer
 	cmd.Stdout = &out
