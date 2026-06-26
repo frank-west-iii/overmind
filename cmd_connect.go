@@ -43,7 +43,9 @@ func (h *cmdConnectHandler) Run(c *cli.Context) error {
 		if len(parts) < 2 {
 			utils.Fatal("Invalid server response")
 		}
-		args = []string{"select-pane", "-t", "%" + parts[1]}
+		paneTarget := "%" + parts[1]
+		exec.Command("tmux", "select-window", "-t", paneTarget).Run()
+		args = []string{"select-pane", "-t", paneTarget}
 	} else {
 		if len(parts) < 2 {
 			utils.Fatal("Invalid server response")
