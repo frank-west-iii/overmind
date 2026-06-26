@@ -26,7 +26,7 @@ var disallowedProcNameCharacters = regexp.MustCompile(`[^a-zA-Z0-9_]`)
 type command struct {
 	title     string
 	timeout   int
-	tmux      *tmuxClient
+	tmux      tmuxBackend
 	output    *multiOutput
 	cmdCenter *commandCenter
 	doneTrig  chan bool
@@ -70,7 +70,12 @@ func newCommand(h *Handler) (*command, error) {
 	instanceID := fmt.Sprintf("overmind-%s-%s", session, nanoid)
 
 	c.output = newMultiOutput(pf.MaxNameLength(), h.ShowTimestamps)
-	c.tmux = newTmuxClient(session, instanceID, root, h.TmuxConfigPath, c.output.Offset())
+
+	if tmuxEnv, inTmux := os.LookupEnv("TMUX"); inTmux && tmuxEnv != "" {
+		c.tmux = newTmuxEmbeddedClient(root)
+	} else {
+		c.tmux = newTmuxClient(session, instanceID, root, h.TmuxConfigPath, c.output.Offset())
+	}
 
 	procNames := utils.SplitAndTrim(h.ProcNames)
 	ignoredProcNames := utils.SplitAndTrim(h.IgnoredProcNames)
@@ -125,14 +130,17 @@ func (c *command) Run() (int, error) {
 		return 1, errors.New("Can't find tmux. Did you forget to install it?")
 	}
 
-	c.output.WriteBoldLinef(nil, "Tmux socket name: %v", c.tmux.Socket)
-	c.output.WriteBoldLinef(nil, "Tmux session ID: %v", c.tmux.Session)
+	if c.tmux.IsEmbedded() {
+		c.output.WriteBoldLinef(nil, "Using existing tmux session (embedded mode)")
+	}
+	c.output.WriteBoldLinef(nil, "Tmux socket name: %v", c.tmux.SocketName())
+	c.output.WriteBoldLinef(nil, "Tmux session ID: %v", c.tmux.SessionName())
 	c.output.WriteBoldLinef(nil, "Listening at %v", c.cmdCenter.SocketPath)
 
 	c.startCommandCenter()
 	defer c.stopCommandCenter()
 
-	if c.daemonize {
+	if c.daemonize && !c.tmux.IsEmbedded() {
 		if !daemon.WasReborn() {
 			c.stopCommandCenter()
 		}

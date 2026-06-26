@@ -42,6 +42,7 @@ Overmind and Hivemind](https://evilmartians.com/chronicles/introducing-overmind-
 You may know several Procfile process management tools, but Overmind has some unique, _extraterrestrial_ powers others don't:
 
 * Overmind starts processes in a tmux session, so you can easily connect to any process and gain control over it;
+* When already inside a tmux session, Overmind automatically creates panes in the current window instead of spawning a nested session;
 * Overmind can restart a single process on the fly — you don't need to restart the whole stack;
 * Overmind allows a specified process to die without interrupting all of the other ones;
 * Overmind can restart specified processes automatically when they die;
@@ -287,7 +288,9 @@ You can safely disconnect from the window by hitting `Ctrl b` (or your tmux pref
 
 You can omit the process name to connect to the first process defined in the Procfile.
 
-If you were already in a `tmux` session when you ran `overmind connect` then you will be in a nested `tmux` session.
+If you run `overmind start` from inside an existing `tmux` session, Overmind will automatically detect this and create panes in the current window instead of spawning a nested tmux session. Each process gets its own pane, and the layout is automatically tiled. Process output goes directly to each pane. When Overmind shuts down, only the panes it created are removed — your session and other windows are left untouched. In this embedded mode, `overmind connect` switches to the target process pane instead of attaching to a separate session.
+
+If Overmind is running outside tmux and you use `overmind connect`, you will get a normal tmux attach. If you were already in a different `tmux` session when you ran `overmind connect` then you will be in a nested `tmux` session.
 To disconnect only from the `overmind` session, use `Ctrl b Ctrl b, d`. Sending `Ctrl b` twice will cause the command
 to be sent to the nested session.
 

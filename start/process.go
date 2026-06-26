@@ -28,7 +28,7 @@ type process struct {
 	interrupted  bool
 	restart      bool
 
-	tmux *tmuxClient
+	tmux tmuxBackend
 
 	in  io.Writer
 	out io.ReadCloser
@@ -38,7 +38,7 @@ type process struct {
 	Command string
 }
 
-func newProcess(tmux *tmuxClient, name string, color int, command string, output *multiOutput, canDie bool, autoRestart bool, stopSignal syscall.Signal) *process {
+func newProcess(tmux tmuxBackend, name string, color int, command string, output *multiOutput, canDie bool, autoRestart bool, stopSignal syscall.Signal) *process {
 	out, in := io.Pipe()
 
 	proc := &process{
@@ -64,7 +64,7 @@ func newProcess(tmux *tmuxClient, name string, color int, command string, output
 }
 
 func (p *process) WindowID() string {
-	return fmt.Sprintf("%s:%s", p.tmux.Session, p.Name)
+	return fmt.Sprintf("%s:%s", p.tmux.SessionName(), p.Name)
 }
 
 func (p *process) StartObserving() {

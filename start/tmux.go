@@ -17,6 +17,18 @@ import (
 	"golang.org/x/term"
 )
 
+type tmuxBackend interface {
+	Start() error
+	Shutdown()
+	AddProcess(p *process)
+	RespawnProcess(p *process)
+	ExitCode() int
+	PaneExitCode(paneID string) int
+	SocketName() string
+	SessionName() string
+	IsEmbedded() bool
+}
+
 var tmuxUnescapeRe = regexp.MustCompile(`\\(\d{3})`)
 var tmuxOutputRe = regexp.MustCompile(`%(\S+) (.+)`)
 var tmuxProcessRe = regexp.MustCompile(`%(\d+) (.+) (\d+)`)
@@ -188,6 +200,18 @@ func (t *tmuxClient) sendOutput(name, str string) {
 
 		fmt.Fprint(proc.in, unescaped)
 	}
+}
+
+func (t *tmuxClient) SocketName() string {
+	return t.Socket
+}
+
+func (t *tmuxClient) SessionName() string {
+	return t.Session
+}
+
+func (t *tmuxClient) IsEmbedded() bool {
+	return false
 }
 
 func (t *tmuxClient) AddProcess(p *process) {

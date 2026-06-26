@@ -159,7 +159,11 @@ func (c *commandCenter) processGetConnection(args []string, conn net.Conn) {
 	}
 
 	if proc != nil {
-		fmt.Fprintf(conn, "%s %s\n", proc.tmux.Socket, proc.WindowID())
+		if proc.tmux.IsEmbedded() {
+			fmt.Fprintf(conn, "pane %s\n", proc.paneID)
+		} else {
+			fmt.Fprintf(conn, "%s %s\n", proc.tmux.SocketName(), proc.WindowID())
+		}
 	} else {
 		fmt.Fprintln(conn, "")
 	}

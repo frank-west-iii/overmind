@@ -37,14 +37,21 @@ func (h *cmdConnectHandler) Run(c *cli.Context) error {
 	}
 
 	parts := strings.Split(response, " ")
-	if len(parts) < 2 {
-		utils.Fatal("Invalid server response")
-	}
 
-	args := []string{"-L", parts[0], "attach", "-t", parts[1]}
-
-	if h.ControlMode {
-		args = append([]string{"-CC"}, args...)
+	var args []string
+	if parts[0] == "pane" {
+		if len(parts) < 2 {
+			utils.Fatal("Invalid server response")
+		}
+		args = []string{"select-pane", "-t", "%" + parts[1]}
+	} else {
+		if len(parts) < 2 {
+			utils.Fatal("Invalid server response")
+		}
+		args = []string{"-L", parts[0], "attach", "-t", parts[1]}
+		if h.ControlMode {
+			args = append([]string{"-CC"}, args...)
+		}
 	}
 
 	cmd := exec.Command("tmux", args...)
