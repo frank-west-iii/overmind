@@ -24,6 +24,8 @@ func newTmuxEmbeddedClient(root string) *tmuxEmbeddedClient {
 }
 
 func (t *tmuxEmbeddedClient) Start() error {
+	t.pushEnvironment()
+
 	for _, p := range t.processes {
 		paneID, err := t.createPane(p)
 		if err != nil {
@@ -147,6 +149,15 @@ func (t *tmuxEmbeddedClient) SessionName() string {
 
 func (t *tmuxEmbeddedClient) IsEmbedded() bool {
 	return true
+}
+
+func (t *tmuxEmbeddedClient) pushEnvironment() {
+	for _, env := range os.Environ() {
+		parts := strings.SplitN(env, "=", 2)
+		if len(parts) == 2 {
+			exec.Command("tmux", "set-environment", parts[0], parts[1]).Run()
+		}
+	}
 }
 
 func (t *tmuxEmbeddedClient) setPaneTitles() {
