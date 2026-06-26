@@ -41,6 +41,8 @@ func (t *tmuxEmbeddedClient) Start() error {
 
 	if len(t.paneIDs) > 0 {
 		t.setRemainOnExit()
+		t.setPaneTitles()
+		exec.Command("tmux", "set-option", "-p", "pane-border-status", "top").Run()
 		exec.Command("tmux", "select-layout", "tiled").Run()
 	}
 
@@ -145,6 +147,13 @@ func (t *tmuxEmbeddedClient) SessionName() string {
 
 func (t *tmuxEmbeddedClient) IsEmbedded() bool {
 	return true
+}
+
+func (t *tmuxEmbeddedClient) setPaneTitles() {
+	for i, p := range t.processes {
+		title := p.Name
+		exec.Command("tmux", "select-pane", "-t", "%"+t.paneIDs[i], "-T", title).Run()
+	}
 }
 
 func (t *tmuxEmbeddedClient) setRemainOnExit() {
