@@ -11,10 +11,10 @@ import (
 )
 
 type tmuxEmbeddedClient struct {
-	processes  []*process
-	paneIDs    []string
-	root       string
-	originPane string
+	processes    []*process
+	paneIDs      []string
+	root         string
+	originWindow string
 }
 
 func newTmuxEmbeddedClient(root string) *tmuxEmbeddedClient {
@@ -23,11 +23,13 @@ func newTmuxEmbeddedClient(root string) *tmuxEmbeddedClient {
 		root:      root,
 	}
 
-	cmd := exec.Command("tmux", "display-message", "-p", "#{pane_id}")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	if cmd.Run() == nil {
-		t.originPane = strings.TrimSpace(out.String())
+	if pane := os.Getenv("TMUX_PANE"); pane != "" {
+		cmd := exec.Command("tmux", "display-message", "-p", "-t", pane, "#{window_id}")
+		var out bytes.Buffer
+		cmd.Stdout = &out
+		if cmd.Run() == nil {
+			t.originWindow = strings.TrimSpace(out.String())
+		}
 	}
 
 	return t
@@ -64,8 +66,8 @@ func (t *tmuxEmbeddedClient) Start() error {
 
 func (t *tmuxEmbeddedClient) createPane(p *process) (string, error) {
 	args := []string{"split-window", "-d"}
-	if t.originPane != "" {
-		args = append(args, "-t", t.originPane)
+	if t.originWindow != "" {
+		args = append(args, "-t", t.originWindow)
 	}
 	args = append(args, "-c", t.root, "-P", "-F", "#{pane_id}", p.Command)
 
