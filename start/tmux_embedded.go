@@ -113,6 +113,8 @@ func (t *tmuxEmbeddedClient) AddProcess(p *process) {
 }
 
 func (t *tmuxEmbeddedClient) RespawnProcess(p *process) {
+	t.pushEnvironment()
+
 	cmd := exec.Command("tmux", "respawn-pane", "-k", "-t", "%"+p.paneID, p.Command)
 	cmd.Dir = t.root
 	cmd.Run()
